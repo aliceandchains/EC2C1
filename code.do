@@ -294,31 +294,84 @@ xtreg ihs_spec_longermig shale_did total_effort_counters Min_temp Max_temp Min_s
 
 
 ********************************************************************************
-* This part assesses the parallel trends in data 
+
+
+
+* Generate aligned treatment event time (for Shales)
 
 gen pseudo_shale_year = 2010 if shale_ever_treated == 0
 gen align_year_shale = first_shale
 replace align_year_shale = pseudo_shale_year if missing(align_year_shale)
-
 gen event_time_shale = year - align_year_shale
 gen in_window_shale = event_time_shale >= -10 & event_time_shale <= 10
+
+* Calculate average bird count by event year
 
 egen avg_treated_shale = mean(ihs_num_tot) if shale_ever_treated == 1 & in_window_shale == 1, by(event_time_shale)
 egen avg_control_shale = mean(ihs_num_tot) if shale_ever_treated == 0 & in_window_shale == 1, by(event_time_shale)
 
-gen source_shale = "Shale" if in_window_shale
-gen event_time_shale_plot = event_time_shale if in_window_shale
-gen avg_treated_shale_plot = avg_treated_shale if in_window_shale
-gen avg_control_shale_plot = avg_control_shale if in_window_shale
+* Collapse to one row per event time
 
 preserve
 keep if in_window_shale
-keep event_time_shale_plot avg_treated_shale_plot avg_control_shale_plot
-duplicates drop
+keep event_time_shale avg_treated_shale avg_control_shale
+collapse (mean) avg_treated_shale avg_control_shale, by(event_time_shale)
 
-twoway (line avg_treated_shale_plot event_time_shale_plot, lcolor(red) lpattern(solid)) (line avg_control_shale_plot event_time_shale_plot, lcolor(red) lpattern(dash)), legend(order(1 "Treated - Shale" 2 "Control - Shale")) xline(0, lcolor(black) lpattern(dot)) xtitle("Years Since Treatment") ytitle("Avg IHS Bird Count") title("Parallel Trends: Shale Wells") xlabel(-10(2)10)
+* Plotting
+
+twoway (line avg_treated_shale event_time_shale, lcolor(red) lwidth(medthick)) (line avg_control_shale event_time_shale, lcolor(red) lpattern(dash) lwidth(medthick)), legend(order(1 "Treated - Shale" 2 "Control - Shale") ring(0) pos(1) region(lstyle(none))) xline(0, lcolor(black) lpattern(dot)) xtitle("Years Since Treatment", size(medsmall)) ytitle("Avg IHS Bird Count", size(medsmall)) title("Parallel Trends: Shale Wells", size(medlarge)) xlabel(-10(2)10, labsize(small)) graphregion(color(white)) plotregion(margin(zero))
 
 restore
+
+
+
+* Generate aligned treatment event time (for Turbines)
+
+gen pseudo_turbine_year = 2010 if turbine_ever_treated == 0
+gen align_year_turbine = first_shale
+replace align_year_turbine = pseudo_turbine_year if missing(align_year_turbine)
+gen event_time_turbine = year - align_year_turbine
+gen in_window_turbine = event_time_turbine >= -10 & event_time_turbine <= 10
+
+* Calculate average bird count by event year
+
+egen avg_treated_turbine = mean(ihs_num_tot) if turbine_ever_treated == 1 & in_window_turbine == 1, by(event_time_turbine)
+egen avg_control_turbine = mean(ihs_num_tot) if turbine_ever_treated == 0 & in_window_turbine == 1, by(event_time_turbine)
+
+* Collapse to one row per event time
+
+preserve
+keep if in_window_turbine
+keep event_time_turbine avg_treated_turbine avg_control_turbine
+collapse (mean) avg_treated_turbine avg_control_turbine, by(event_time_turbine)
+
+* Plotting
+
+twoway (line avg_treated_turbine event_time_turbine, lcolor(blue) lwidth(medthick)) (line avg_control_turbine event_time_turbine, lcolor(blue) lpattern(dash) lwidth(medthick)), legend(order(1 "Treated" 2 "Control") ring(0) pos(1) region(lstyle(none))) xline(0, lcolor(black) lpattern(dot)) xtitle("Years Since Treatment", size(medsmall)) ytitle("Avg IHS Bird Count", size(medsmall)) title("Wind Turbines", size(medlarge)) xlabel(-10(2)10, labsize(small)) graphregion(color(white)) plotregion(margin(zero))
+
+restore
+
+
+
+********************************************************************************
+* This part will add an interaction variable to allow for unique trends within each circle, hence relieving the prallel trends assumption
+
+
+* The effect of Turbines on Bird count (revisited)
+
+xtset circle_id year
+
+xtreg ihs_num_tot turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
+
+
+
+
+
+
+
+
+
+
 
 
 
