@@ -328,7 +328,7 @@ restore
 * Generate aligned treatment event time (for Turbines)
 
 gen pseudo_turbine_year = 2010 if turbine_ever_treated == 0
-gen align_year_turbine = first_shale
+gen align_year_turbine = first_turbine
 replace align_year_turbine = pseudo_turbine_year if missing(align_year_turbine)
 gen event_time_turbine = year - align_year_turbine
 gen in_window_turbine = event_time_turbine >= -10 & event_time_turbine <= 10
@@ -363,7 +363,153 @@ xtset circle_id year
 
 xtreg ihs_num_tot turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
 
+* Immediately after:
+display "Coef: " _b[turbine_did]
+display "SE:   " _se[turbine_did]
+display "P-val: " 2*ttail(e(df_r), abs(_b[turbine_did]/_se[turbine_did]))
 
+
+
+* The effect of Shale Wells on Bird count (revisited)
+
+xtset circle_id year
+
+xtreg ihs_num_tot shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
+
+* Immediately after:
+display "Coef: " _b[shale_did]
+display "SE:   " _se[shale_did]
+display "P-val: " 2*ttail(e(df_r), abs(_b[shale_did]/_se[shale_did]))
+
+
+
+* The effect of Turbines on Species count (revisited)
+
+xtset circle_id year
+
+xtreg ihs_spec_tot turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
+
+* Immediately after:
+display "Coef: " _b[turbine_did]
+display "SE:   " _se[turbine_did]
+display "P-val: " 2*ttail(e(df_r), abs(_b[turbine_did]/_se[turbine_did]))
+
+
+
+* The effect of Shale Wells on Bird count (revisited)
+
+xtset circle_id year
+
+xtreg ihs_spec_tot shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
+
+* Immediately after:
+display "Coef: " _b[shale_did]
+display "SE:   " _se[shale_did]
+display "P-val: " 2*ttail(e(df_r), abs(_b[shale_did]/_se[shale_did]))
+
+
+
+********************************************************************************
+* This part will perform a Placebo test for a matter of robustness check
+
+
+* Turbines
+
+xtset circle_id year
+
+* Running the actual model and storing true coefficient
+xtreg ihs_num_tot turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+scalar real_effect = _b[turbine_did]
+
+* Saving the original dataset
+tempfile original
+save `original', replace
+
+* Creating empty results dataset
+clear
+set obs 100
+gen placebo_id = _n
+gen placebo_effect = .
+tempfile placebo_results
+save `placebo_results', replace
+
+* Looping over 100 placebo assignments
+forvalues i = 1/100 {
+    use `original', clear
+
+    * Generating random placebo treatment
+    gen rand = runiform()
+    gen placebo_treat = 0
+    quietly sum turbine_did
+    local treat_share = r(mean)
+    replace placebo_treat = 1 if rand < `treat_share'
+
+    * Run placebo regression
+    quietly xtreg ihs_num_tot placebo_treat total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+    scalar b = _b[placebo_treat]
+
+    * Saving result in the placeholder dataset
+    use `placebo_results', clear
+    replace placebo_effect = b in `i'
+    save `placebo_results', replace
+}
+
+* Loading results and plotting histogram
+use `placebo_results', clear
+
+histogram placebo_effect, bin(20) color(gs13) xline(`=real_effect', lcolor(red) lwidth(medthick) lpattern(solid)) title("Placebo Distribution vs Real Effect") subtitle("Red line = True Turbine Effect") xtitle("Estimated Coefficient") ytitle("Frequency") note("Placebo test with 100 random assignments") legend(off)
+display "True effect of turbine_did = " real_effect
+display "Real effect of turbine_did = " real_effect
+
+
+
+* Shale wells
+
+xtset circle_id year
+
+* Running the actual model and storing true coefficient
+xtreg ihs_num_tot shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+scalar real_effect = _b[shale_did]
+
+* Saving the original dataset
+tempfile original
+save `original', replace
+
+* Creating empty results dataset
+clear
+set obs 100
+gen placebo_id = _n
+gen placebo_effect = .
+tempfile placebo_results
+save `placebo_results', replace
+
+* Looping over 100 placebo assignments
+forvalues i = 1/100 {
+    use `original', clear
+
+    * Generating random placebo treatment
+    gen rand = runiform()
+    gen placebo_treat = 0
+    quietly sum turbine_did
+    local treat_share = r(mean)
+    replace placebo_treat = 1 if rand < `treat_share'
+
+    * Run placebo regression
+    quietly xtreg ihs_num_tot placebo_treat total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+    scalar b = _b[placebo_treat]
+
+    * Saving result in the placeholder dataset
+    use `placebo_results', clear
+    replace placebo_effect = b in `i'
+    save `placebo_results', replace
+}
+
+* Loading results and plotting histogram
+use `placebo_results', clear
+
+histogram placebo_effect, bin(20) color(gs13) xline(`=real_effect', lcolor(red) lwidth(medthick) lpattern(solid)) title("Placebo Distribution vs Real Effect") subtitle("Red line = True Shale Effect") xtitle("Estimated Coefficient") ytitle("Frequency") note("Placebo test with 100 random assignments") legend(off)
+display "True effect of shale_did = " real_effect
+display "Real effect of shale_did = " real_effect
 
 
 
