@@ -294,7 +294,7 @@ xtreg ihs_spec_longermig shale_did total_effort_counters Min_temp Max_temp Min_s
 
 
 ********************************************************************************
-
+* This part will try assess the paralell trends assumption by plotting trend lines
 
 
 * Generate aligned treatment event time (for Shales)
@@ -587,6 +587,8 @@ xtreg ihs_spec_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 s
 ********************************************************************************
 * Trying lagged regression with a lag between treatment and effect taking place
 
+xtset circle_id year
+
 gen turbine_did_lag1 = L1.turbine_did
 gen turbine_did_lag2 = L2.turbine_did
 gen turbine_did_lag3 = L3.turbine_did
@@ -614,6 +616,19 @@ xtreg ihs_num_tot turbine_did_lag4 total_effort_counters Min_temp Max_temp Max_s
 xtreg ihs_num_tot turbine_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
+* Regression of the species count on Turbines with lag involved
+
+xtreg ihs_spec_tot turbine_did_lag1 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot turbine_did_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot turbine_did_lag3 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot turbine_did_lag4 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot turbine_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
 
 * Regression of the bird count on Shale wells with lag involved
 
@@ -627,6 +642,19 @@ xtreg ihs_num_tot shale_did_lag4 total_effort_counters Min_temp Max_temp Max_sno
 
 xtreg ihs_num_tot shale_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
+
+
+* Regression of the bird count on Shale wells with lag involved
+
+xtreg ihs_spec_tot shale_did_lag1 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot shale_did_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot shale_did_lag3 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot shale_did_lag4 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+xtreg ihs_spec_tot shale_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
@@ -665,20 +693,47 @@ xtreg ihs_num_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_win
 
 
 
+********************************************************************************
+* This part will observe a lagged regression to observe if there is any delay between energy installation and inward migration of the human population
+
+xtset circle_id year
+
+gen turbine_did_lag1 = L1.turbine_did
+gen turbine_did_lag2 = L2.turbine_did
+gen turbine_did_lag3 = L3.turbine_did
+gen turbine_did_lag4 = L4.turbine_did
+gen turbine_did_lag5 = L5.turbine_did
+
+gen shale_did_lag1 = L1.shale_did
+gen shale_did_lag2 = L2.shale_did
+gen shale_did_lag3 = L3.shale_did
+gen shale_did_lag4 = L4.shale_did
+gen shale_did_lag5 = L5.shale_did
 
 
 
+* This lagged regression is to estimate the effect of Turbines on population over time
+xtreg lnpop turbine_did_lag1 turbine_did_lag2 turbine_did_lag3 turbine_did_lag4 turbine_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
+* This lagged regression is to estimate the effect of Turbines on population over time
+xtreg lnpop shale_did_lag1 shale_did_lag2 shale_did_lag3 shale_did_lag4 shale_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
+********************************************************************************
+* This part will observe a lagged regression to observe if there is any delay between effect of the population on bied count
 
 
+xtset circle_id year
 
 
+gen pop_lag1 = L1.lnpop
+gen pop_lag2 = L2.lnpop
 
 
+xtreg ihs_num_tot pop_lag1 pop_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
+xtreg ihs_spec_tot pop_lag1 pop_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
