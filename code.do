@@ -1,6 +1,6 @@
 use "birds (1).dta", clear
 
-* Preparing data 
+* Preparing data (encoding string variables and replacing missing values with zeros for snow and speed)
 
 encode AMCloud, gen(amcloud_num)
 encode PMCloud, gen(pmcloud_num)
@@ -19,7 +19,7 @@ replace Max_wind = 0 if Max_wind == .
 
 
 
-* Winsorising data 
+* Winsorising data at the 99th percentile to exclude extreme values that may skew estimates
 
 ssc install winsor2, replace
 
@@ -84,7 +84,9 @@ gen turbine_did_continuous = turbine_ever_treated*c_num_turbines
 
 
 
-* Katovich variables for Turbines bird count
+* Using regression (1) to estimate treatment effects in the bivariate and continuous settins
+
+* Katovich variables for Turbines bird count 
 
 xtset circle_id year
 
@@ -304,7 +306,7 @@ tab first_shale if shale_ever_treated == 1
 tab first_turbine if turbine_ever_treated == 1
 
 
-* Generate aligned treatment event time (for Shales)
+* Generating aligned treatment event time (for Shales) - 2010 is chosed as preudo year since it lies in the middle of the distribution of installed plants throughout 2000 and 2020
 
 gen pseudo_shale_year = 2010 if shale_ever_treated == 0
 gen align_year_shale = first_shale
@@ -312,12 +314,12 @@ replace align_year_shale = pseudo_shale_year if missing(align_year_shale)
 gen event_time_shale = year - align_year_shale
 gen in_window_shale = event_time_shale >= -10 & event_time_shale <= 10
 
-* Calculate average bird count by event year
+* Calculating average bird count by event year
 
 egen avg_treated_shale = mean(ihs_num_tot) if shale_ever_treated == 1 & in_window_shale == 1, by(event_time_shale)
 egen avg_control_shale = mean(ihs_num_tot) if shale_ever_treated == 0 & in_window_shale == 1, by(event_time_shale)
 
-* Collapse to one row per event time
+* Collapsing to one row per event time
 
 preserve
 keep if in_window_shale
@@ -332,7 +334,7 @@ restore
 
 
 
-* Generate aligned treatment event time (for Turbines)
+* Generating aligned treatment event time (for Turbines)
 
 gen pseudo_turbine_year = 2010 if turbine_ever_treated == 0
 gen align_year_turbine = first_turbine
@@ -340,12 +342,12 @@ replace align_year_turbine = pseudo_turbine_year if missing(align_year_turbine)
 gen event_time_turbine = year - align_year_turbine
 gen in_window_turbine = event_time_turbine >= -10 & event_time_turbine <= 10
 
-* Calculate average bird count by event year
+* Calculating average bird count by event year
 
 egen avg_treated_turbine = mean(ihs_num_tot) if turbine_ever_treated == 1 & in_window_turbine == 1, by(event_time_turbine)
 egen avg_control_turbine = mean(ihs_num_tot) if turbine_ever_treated == 0 & in_window_turbine == 1, by(event_time_turbine)
 
-* Collapse to one row per event time
+* Collapsing to one row per event time
 
 preserve
 keep if in_window_turbine
@@ -370,7 +372,6 @@ xtset circle_id year
 
 xtreg ihs_num_tot turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
 
-* Immediately after:
 display "Coef: " _b[turbine_did]
 display "SE:   " _se[turbine_did]
 display "P-val: " 2*ttail(e(df_r), abs(_b[turbine_did]/_se[turbine_did]))
@@ -383,7 +384,6 @@ xtset circle_id year
 
 xtreg ihs_num_tot shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
 
-* Immediately after:
 display "Coef: " _b[shale_did]
 display "SE:   " _se[shale_did]
 display "P-val: " 2*ttail(e(df_r), abs(_b[shale_did]/_se[shale_did]))
@@ -396,7 +396,6 @@ xtset circle_id year
 
 xtreg ihs_spec_tot turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
 
-* Immediately after:
 display "Coef: " _b[turbine_did]
 display "SE:   " _se[turbine_did]
 display "P-val: " 2*ttail(e(df_r), abs(_b[turbine_did]/_se[turbine_did]))
@@ -409,7 +408,6 @@ xtset circle_id year
 
 xtreg ihs_spec_tot shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year i.circle_id#c.year, fe cluster(circle_id)
 
-* Immediately after:
 display "Coef: " _b[shale_did]
 display "SE:   " _se[shale_did]
 display "P-val: " 2*ttail(e(df_r), abs(_b[shale_did]/_se[shale_did]))
@@ -451,7 +449,7 @@ forvalues i = 1/100 {
     local treat_share = r(mean)
     replace placebo_treat = 1 if rand < `treat_share'
 
-    * Run placebo regression
+    * Running placebo regression
     quietly xtreg ihs_num_tot placebo_treat total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
     scalar b = _b[placebo_treat]
 
@@ -501,7 +499,7 @@ forvalues i = 1/100 {
     local treat_share = r(mean)
     replace placebo_treat = 1 if rand < `treat_share'
 
-    * Run placebo regression
+    * Running placebo regression
     quietly xtreg ihs_num_tot placebo_treat total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
     scalar b = _b[placebo_treat]
 
@@ -517,7 +515,6 @@ use `placebo_results', clear
 histogram placebo_effect, bin(20) color(gs13) xline(`=real_effect', lcolor(red) lwidth(medthick) lpattern(solid)) title("Placebo Distribution vs Real Effect") subtitle("Red line = True Shale Effect") xtitle("Estimated Coefficient") ytitle("Frequency") note("Placebo test with 100 random assignments") legend(off)
 display "True effect of shale_did = " real_effect
 display "Real effect of shale_did = " real_effect
-
 
 
 
@@ -579,80 +576,6 @@ xtreg ihs_num_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 sh
 * Effect of Shales on Species count (Katovich covariates)
 
 xtreg ihs_spec_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-********************************************************************************
-* Trying lagged regression with a lag between treatment and effect taking place
-
-xtset circle_id year
-
-gen turbine_did_lag1 = L1.turbine_did
-gen turbine_did_lag2 = L2.turbine_did
-gen turbine_did_lag3 = L3.turbine_did
-gen turbine_did_lag4 = L4.turbine_did
-gen turbine_did_lag5 = L5.turbine_did
-
-gen shale_did_lag1 = L1.shale_did
-gen shale_did_lag2 = L2.shale_did
-gen shale_did_lag3 = L3.shale_did
-gen shale_did_lag4 = L4.shale_did
-gen shale_did_lag5 = L5.shale_did
-
-
-
-* Regression of the bird count on Turbines with lag involved
-
-xtreg ihs_num_tot turbine_did_lag1 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot turbine_did_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot turbine_did_lag3 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot turbine_did_lag4 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot turbine_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-* Regression of the species count on Turbines with lag involved
-
-xtreg ihs_spec_tot turbine_did_lag1 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot turbine_did_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot turbine_did_lag3 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot turbine_did_lag4 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot turbine_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the bird count on Shale wells with lag involved
-
-xtreg ihs_num_tot shale_did_lag1 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot shale_did_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot shale_did_lag3 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot shale_did_lag4 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_num_tot shale_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the bird count on Shale wells with lag involved
-
-xtreg ihs_spec_tot shale_did_lag1 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot shale_did_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot shale_did_lag3 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot shale_did_lag4 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-xtreg ihs_spec_tot shale_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
