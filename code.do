@@ -297,6 +297,13 @@ xtreg ihs_spec_longermig shale_did total_effort_counters Min_temp Max_temp Min_s
 * This part will try assess the paralell trends assumption by plotting trend lines
 
 
+
+* Exploring the distribution curve of shale wells and turbine installments to determine the pseudo treatment year
+
+tab first_shale if shale_ever_treated == 1
+tab first_turbine if turbine_ever_treated == 1
+
+
 * Generate aligned treatment event time (for Shales)
 
 gen pseudo_shale_year = 2010 if shale_ever_treated == 0
@@ -396,7 +403,7 @@ display "P-val: " 2*ttail(e(df_r), abs(_b[turbine_did]/_se[turbine_did]))
 
 
 
-* The effect of Shale Wells on Bird count (revisited)
+* The effect of Shale Wells on Species count (revisited)
 
 xtset circle_id year
 
@@ -514,13 +521,6 @@ display "Real effect of shale_did = " real_effect
 
 
 
-
-
-
-
-
-
-
 ********************************************************************************
 * This part will investigate how the estimated effect changes for circles that had longer post-treatment period
 
@@ -539,7 +539,6 @@ gen shale_did_win2 = (shale_ever_treated == 1 & post_shale_win2 == 1)
 gen shale_did_win3 = (shale_ever_treated == 1 & post_shale_win3 == 1)
 gen shale_did_win4 = (shale_ever_treated == 1 & post_shale_win4 == 1)
 gen shale_did_win5 = (shale_ever_treated == 1 & post_shale_win5 == 1)
-
 
 
 
@@ -565,20 +564,19 @@ xtreg ihs_num_tot turbine_did_win1 turbine_did_win2 turbine_did_win3 turbine_did
 
 
 
-
-* Effect of Turbines on Bird Population (Katovich covariates)
+* Effect of Turbines on Species Count (Katovich covariates)
 
 xtreg ihs_spec_tot turbine_did_win1 turbine_did_win2 turbine_did_win3 turbine_did_win4 turbine_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
-* Effect of Turbines on Bird Population (Katovich covariates)
+* Effect of Shales on Bird Population (Katovich covariates)
 
 xtreg ihs_num_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
-* Effect of Turbines on Bird Population (Katovich covariates)
+* Effect of Shales on Species count (Katovich covariates)
 
 xtreg ihs_spec_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
@@ -693,47 +691,6 @@ xtreg ihs_num_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_win
 
 
 
-********************************************************************************
-* This part will observe a lagged regression to observe if there is any delay between energy installation and inward migration of the human population
+* Regression of the species count on the population
 
-xtset circle_id year
-
-gen turbine_did_lag1 = L1.turbine_did
-gen turbine_did_lag2 = L2.turbine_did
-gen turbine_did_lag3 = L3.turbine_did
-gen turbine_did_lag4 = L4.turbine_did
-gen turbine_did_lag5 = L5.turbine_did
-
-gen shale_did_lag1 = L1.shale_did
-gen shale_did_lag2 = L2.shale_did
-gen shale_did_lag3 = L3.shale_did
-gen shale_did_lag4 = L4.shale_did
-gen shale_did_lag5 = L5.shale_did
-
-
-
-* This lagged regression is to estimate the effect of Turbines on population over time
-xtreg lnpop turbine_did_lag1 turbine_did_lag2 turbine_did_lag3 turbine_did_lag4 turbine_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* This lagged regression is to estimate the effect of Turbines on population over time
-xtreg lnpop shale_did_lag1 shale_did_lag2 shale_did_lag3 shale_did_lag4 shale_did_lag5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-********************************************************************************
-* This part will observe a lagged regression to observe if there is any delay between effect of the population on bied count
-
-
-xtset circle_id year
-
-
-gen pop_lag1 = L1.lnpop
-gen pop_lag2 = L2.lnpop
-
-
-xtreg ihs_num_tot pop_lag1 pop_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-xtreg ihs_spec_tot pop_lag1 pop_lag2 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+xtreg ihs_spec_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
