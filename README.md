@@ -1,0 +1,397 @@
+# Introduction
+
+This paper replicates and extends the econometric methodology published
+by Katovich (2024), who investigates the casual effect of expansion in
+energy infrastructure, specifically wind turbines and gas shale wells,
+on bird populations varied across species and types of habitats. The
+original work proposes a population-level approach to evaluating the
+impact by mapping longitudinal micro-data from the National Audubon
+Society's Christmas Bird Count with geolocated registries of all wind
+turbines and shale wells constructed for the entire lower 48 United
+States between 2000 and 2020. Such a methodology improves prior research
+such as (Barton et al., 2016) that heavily relied on extrapolation
+tactics which typically lack external validity due to selection bias
+when dealing with site-specific investigations.
+
+Katovich (2024) uses bivariate DiD and Poisson continuous settings to
+estimate both the treatment and marginal effects of infrastructure
+installation. The bivariate DiD model uses the *csdid* estimator that
+appropriately weighs group-time comparisons to avoid bias when comparing
+treated circles with those that have already been treated, which is
+important to account for any heterogeneity caused by the difference in
+time of infrastructure arrival. In addition to the bivariate model that
+tracks only the first installment of the infrastructure, the continuous
+setting further investigates the effect by capturing the intensity of
+treatment by considering the cumulative number of turbines or shale
+wells in a given circle. The core regression incorporates circle fixed
+effects, controlling for unobserved, time-invariant differences across
+circles, such as long-standing regulatory environments, as well as year
+fixed effects to absorb common shocks affecting all circles in a given
+year such as federal environmental policies that may be critical in
+determining the installation of energy infrastructure. Standard errors
+are clustered at the circle level to account for the autocorrelation
+between error terms and heteroskedasticity within each circle over time
+which can persist after controlling for weather, land conditions, and
+counting efforts on the date of data collection. For instance, bird
+disease in a particular location in a given year will likely affect bird
+count in the subsequent periods. Although clustering on the circle level
+does not account for potential spillover effects between neighboring
+treated and untreated circles, Katovich additionally employs the
+Correlated Spatial Random Effects model, allowing spatial lags in
+dependent variables and spatially lagged errors. Lastly, the paper
+investigates whether the human population acts as a mediator, testing
+that it's not the energy infrastructure but rather the associated inflow
+of human population in treated circles that affect bird and species
+counts.
+
+Overall, core findings conclude that shale wells have a statistically
+significant negative effect on bird populations, whereas wind turbines
+showed no meaningful effect. The same result is shared by continuous and
+CSRE models. Similarly, the human population has not appeared as a
+mediator, supporting claims about direct casual effects found earlier.
+
+# Replication
+
+$$y_{ct} = \beta_1 T_{ct} + \mathbf{X}_{ct}' \boldsymbol{\beta}_2 + \gamma_c + \delta_t + \varepsilon_{ct} \hspace{2em} (1)$$
+
+The dataset used for replication is close to the one used by Katovich
+(2024) and includes *31,000+* rows of panel data. Prior to the analysis,
+all data was winsorised at the *99th* percentile to exclude the impact
+of any extremes. Instead of the *csdid* estimator, this report uses a
+standard Two-Way Fixed-Effects DiD model in combination with circle and
+time fixed effects. Equation (1) specifies the regression where the
+outcome of interest $y_{ct}$ is the *asinh()* transformed bird
+population or species count (to handle zero and extreme values), and
+$T_{ct}$ is the binary treatment variable indicating whether a wind
+turbine or shale well was installed in a particular circle. In this
+setting, $\beta_1$ estimates the causal effect as an approximate *%*
+change in the outcome (semi-elasticity), given that the treatment
+occurs. The $X_{ct}$ matrix of covariates includes parameters for
+controlling differences in (i) *max* and *min* temperature, snow, and
+wind conditions; (ii) the proportion of agricultural, pasture, and
+developed land within the circle; and (iii) the observer effort on the
+day of data collection. These covariates help to control for observed
+heterogeneity across circles and over time that may independently
+influence bird populations. It is important to note that the model
+relies on a parallel trend assumption, which assumes that in the absence
+of treatment, both treated and untreated circles would follow the same
+trend in the development of bird and species counts. Robust standard
+errors are clustered at the circle level as discussed before.
+
+Tables 1 and 2 display estimated effects of wind turbine and shale well
+installations on bird populations and species, respectively. Following
+the methodology of Katovich (2024), the same set of covariates was used
+to enhance comparability. The results in the tables closely replicate
+the outcomes of the original paper.
+
+::: adjustbox
+width=
+
+                Total    Grassland   Woodland   Wetland   Other Habitat    Urban    Non-Urban   Residents   Short Mig.   Longer Mig.
+  ----------- --------- ----------- ---------- --------- --------------- --------- ----------- ----------- ------------ -------------
+                                                                                                                        
+  Coef.         0.005      0.042      0.082      0.016       -0.018        0.000      0.034       0.015       -0.008        0.011
+  St. Error    (0.032)    (0.030)    (0.023)    (0.055)      (0.039)      (0.033)    (0.037)     (0.024)     (0.034)       (0.050)
+  p-val         0.887      0.160      0.000      0.764        0.649        0.994      0.357       0.548       0.819         0.829
+                                                                                                                        
+  Coef.         0.008      0.014      0.016     -0.003       -0.001        0.008      0.007       0.012       0.004         0.009
+  St. Error    (0.008)    (0.012)    (0.008)    (0.018)      (0.008)      (0.006)    (0.012)     (0.007)     (0.009)       (0.017)
+  p-val         0.315      0.249      0.035      0.842        0.905        0.181      0.569       0.063       0.668         0.580
+
+  : Estimated effect from Turbines on Bird Population
+:::
+
+The effect of wind infrastructure appears to have no statistical
+significance for the aggregated bird population or species count with
+near-zero, yet positive coefficients of *(0.005) and (0.008)* as well as
+insignificant *p-values = (0.887) and (0.315)*. The consistently
+positive coefficient might be the result of the omitted variable bias
+(OVB) related to unobserved factors such as local biological
+conservation policies in circles that attract wind turbines and
+independently raise bird counts. On the disaggregated level, however,
+woodland species experienced a positive significant effect *p-values =
+(0.000) and (0.036)*, implying wind turbine installation increases
+woodland bird counts and species by *8.2%* and *1.6%* accordingly, which
+might sound counterintuitively but can suggest a reasonable ecological
+benefit that fits into the wider environment for these species through
+behavioural shift or simply an (OVB) in the absence of site-specific
+unaccounted characteristics.
+
+On the opposite side, results for shale wells present a more grounded
+argument for their statistical significance in negatively impacting the
+bird count, which is especially notable at a disaggregated level with
+counts for grassland and longer migration species declining by *23.2%*
+and *23.1%* with *p-values = (0.001) and (0.013)*. While estimated
+coefficients are consistently negative and align with Katovich's (2024)
+results, many of them lack statistical validation which is observable on
+the aggregated level with estimated declines in population and species
+counts of *12.8%* and *1.7%* with *p-values = (0.120) and (0.363)*.
+While the original paper finds significance, it's likely attributed to
+the difference in estimators used - more robust *csdid vs TWFE* and
+dataset. These findings suggest, although not conclusively, a negative
+casual effect of shale well installation on bird counts.
+
+::: adjustbox
+width=
+
+                Total    Grassland   Woodland   Wetland   Other Habitat    Urban    Non-Urban   Residents   Short Mig.   Longer Mig.
+  ----------- --------- ----------- ---------- --------- --------------- --------- ----------- ----------- ------------ -------------
+                                                                                                                        
+  Coef.        -0.128     -0.232      -0.071    -0.069       -0.064       -0.110     -0.158      -0.146       -0.104       -0.231
+  St. Error    (0.082)    (0.069)    (0.065)    (0.107)      (0.109)      (0.092)    (0.081)     (0.051)     (0.093)       (0.093)
+  p-val         0.120      0.001      0.277      0.518        0.559        0.234      0.052       0.005       0.262         0.013
+                                                                                                                        
+  Coef.        -0.017     -0.048      -0.005     0.020        0.010       -0.005     -0.028      -0.028       -0.001       -0.061
+  St. Error    (0.018)    (0.027)    (0.016)    (0.047)      (0.018)      (0.014)    (0.029)     (0.013)     (0.021)       (0.037)
+  p-val         0.363      0.079      0.749      0.677        0.579        0.706      0.335       0.030       0.963         0.096
+
+  : Estimated effect from Shale wells on Bird Population
+:::
+
+To further reinforce replication, a wider spectrum of controls was used
+to better capture the difference in geographical data beyond the
+original specification. For example, covariates for capturing the form
+of still and moving water (open/frozen) are relevant controls since they
+are exogenous to treatment and could present vital impacts on some types
+of birds, especially those with the wetland form of habitat, therefore
+reducing the (OVB). Running this extended form produced results close to
+the earlier findings with only small variations in estimates and
+significance, hence, serving as a robustness check.
+
+# Extended Analysis
+
+As previously discussed, parallel trends lie at the core of a standard
+Two-Way Fixed-Effects DiD model, however, with an extensive and not
+perfectly balanced panel dataset with over *2000* circles and up to 20
+periods, this assumption becomes harder to sustain due to the higher
+likelihood of heterogeneity in pre-treatment periods. Figure 1 plots
+average *asinh()* transformed Bird counts for each group against years
+before and after pseudo treatment year - 2010, which is positioned in
+the middle of the initial turbine and shale well installation
+distribution, to visualise trends for wind turbines and shale wells. The
+graphs suggest slightly divergent trends for control and treated groups
+in the case of wind turbines, motivating to adjust the previous DiD
+model by relaxing the parallel trends assumption for each circle. Such a
+divergence might point to the selection bias since areas chosen for
+installments were already experiencing declines in bird habitats due to
+other unobserved factors.
+
+$$y_{ct} = \beta_1 T_{ct} + \mathbf{X}_{ct}' \boldsymbol{\beta}_2 + \gamma_c + \delta_t + \lambda_c \cdot t + \varepsilon_{ct} \hspace{2em} (1')$$
+
+Regression (1') adds an interaction term $\lambda_c \cdot t$, allowing
+each circle to follow its own trend, therefore enabling $\beta_1$ to
+absorb more variation attributable to treatment and avoiding bias
+arising due to unique trends across circles. Table 3 presents a summary
+of estimates for aggregated levels of data. It's worth noting that
+several observations were omitted due to multicollinearity which reduces
+accuracy and inflates standard errors.
+
+For shale wells, the estimated effect remained nearly identical to the
+results in Table 2, predicting a *12.6%* reduction in bird count with a
+*p-value = (0.116)*. Such results serve as a robustness check as trends
+are seen on the graph with control and treated groups being vastly
+parallel. This also means that the potential violation of parallel
+trends in the initial model did not drive the negative estimated
+outcome. Nevertheless, the estimates for turbines appeared more negative
+than those in Table 1, suggesting a *7.2%* decline in bird count,
+although the effect remained statistically insignificant with a *p-value
+= (0.111)*. Such an unexpected outcome displays that the original model
+may have conflated treatment effects with underlying trends unique to
+specific circles. Although the estimate fails to fall into the rejection
+region, robustness analysis potentially undermines the parallel trends
+assumption in the case of wind turbines, which is consistent with Figure
+1, showing a divergence in the paths.
+
+::: center
+:::
+
+<figure>
+<figure>
+<img src="Wind Turbines.png" />
+</figure>
+<figure>
+<img src="Shale Wells.png" />
+</figure>
+</figure>
+
+The effect on species is minor and not statistically significant similar
+to the baseline model (1). Applying regression (1') estimated a *0.5%*
+reduction in bird species due to Turbine installation with a *p-value =
+(0.585)*. Likewise, the estimated effect on species count for shale
+wells is almost identical to Table 2 with a *1.5%* fall in bird species
+and *p-value = (0.321)*, underlining the suitability of parallel trends
+assumptions for shale wells and a more considerable, yet insignificant,
+negative impact from shale wells.
+
+Lastly, to assess the robustness of estimated effects, a Placebo test
+was conducted with 100 random assignments of treatment to circles that
+were never actually treated. The distribution of placebo coefficients
+which is centered around zero under the null of zero treatment effect
+contrasts with a *-12.6%* true estimated effect of shale wells on the
+bird population. Such a result lies far beyond the range of placebo
+distribution, reflecting a likely causal negative impact of shale well
+installation on bird counts.
+
+                     **Turbines**   **Shale Wells**
+  ----------------- -------------- -----------------
+  **Total Count**                  
+  Coefficient           -0.072          -0.126
+  Std. Error           (0.045)          (0.080)
+  p-value               0.111            0.116
+                                   
+  Coefficient           -0.005          -0.015
+  Std. Error           (0.008)          (0.015)
+  p-value               0.585            0.321
+
+  : Estimated Effect from Interaction Model on Bird Population
+
+# Lagged Effects
+
+The more significant effect of shale wells compared to turbines is
+additionally supported by extending the analysis by splitting the
+post-treatment period into separate intervals, covering *0-1, 2-3, 4-5,
+6-7* and *8+* years after the first installation. Compared to the
+original paper and basic DiD model, this setting helps to better
+investigate any possible lag in the effect, as well as how treatment
+effects evolved over time. This is a crucial aspect to include since
+some circles contain only a very short post-treatment observation window
+whilst others have more than 8 years of post-treatment data. A standard
+approach would only uncover the average effect, hiding any heterogeneity
+in patterns of treatment, as well as any lag between installation and
+the effect on outcome.
+
+::: {#tab:window_effects_shale_turbine}
+                                     0--1 yrs   2--3 yrs   4--5 yrs   6--7 yrs   8+ yrs
+  --------------------------------- ---------- ---------- ---------- ---------- ---------
+  **Turbine on Bird Count**                                                     
+  Coef.                               -0.065     0.010      0.051      0.010      0.053
+  St. Error                          (0.034)     (0.42)    (0.046)    (0.045)    (0.039)
+  p-val                               0.054      0.803      0.262      0.833      0.181
+  **Turbine on Species Count**                                                  
+  Coef.                               -0.009     0.015      0.007      0.009      0.025
+  St. Error                          (0.008)    (0.009)    (0.011)    (0.012)    (0.011)
+  p-val                               0.267      0.115      0.551      0.452      0.019
+  **Shale well on Bird Count**                                                  
+  Coef.                               0.057      -0.160     -0.087     -0.159    -0.183
+  St. Error                          (0.088)    (0.088)    (0.098)    (0.094)    (0.096)
+  p-val                               0.518      0.070      0.375      0.092      0.057
+  **Shale well on Species Count**                                               
+  Coef.                               -0.005     -0.031     -0.04      -0.017    -0.032
+  St. Error                          (0.018)    (0.021)    (0.023)    (0.022)    (0.024)
+  p-val                               0.771      0.126      0.847      0.448      0.175
+
+  : Estimated Effect by Post-Treatment Time Window
+:::
+
+::: flushleft
+:::
+
+The regression (1) was modified by incorporating *5* additional mutually
+exclusive binary variables, specified for each post-treatment interval.
+The combination of these provides an interpretation of the marginal
+treatment effect in each interval. For example, the coefficient for *0-1
+yrs*, would estimate the effect on bird/species count after the first
+*2* years since installation.
+
+Table 4 uncovered the divergent evolution of treatment effects for
+turbines and shale wells. Circles with wind turbines installed saw a
+statistically significant *6.5%* fall in bird counts during the first
+two years after installation, while the effect for subsequent windows
+remained insignificant and slightly positive. For circles treated with
+shale wells, trends suggest the growing negative effect that becomes
+more significant over time with an estimated *15.9%* fall over the first
+*6-7* years and a *18.3%* reduction in the bird population after *8+*
+years of post-treatment. While not all of these findings are
+statistically significant at *5%* significance level, they reflect a
+potential heterogeneity not only in the timing of the effect across
+various post-treatment periods but also in the pattern of outcome
+changes for two distinct types of infrastructure. Notably, since the
+average post-treatment period for turbines is *6.1* years and *4.3*
+years for shale wells, the standard approach places more weight on the
+medium-term, without evaluating short-term and long-term effects that
+play a larger role in decision making and assessing the economic
+significance of energy projects. Results for shale wells also imply
+considerable economic significance, given the pace of the US energy
+industry expansion, as well as the US\$40 billion contribution of
+birdwatching and bird hunting activities through direct and indirect
+expenditure in the US economy in 2024.
+
+# Human Population as a mediator
+
+Another concern addressed by the original study is whether a human
+population acts as a mediator in affecting the bird count. This argument
+is motivated by the evidence from Wilson (2022), suggesting that
+increased fracking activity causes inward migration. If this holds,
+without controlling for the mediation effect, treatment effects would be
+biased as they absorb part of human influence, potentially overstating
+the true value. To assess whether the human population is a mediator,
+two causal relationships need to be established - firstly, the causal
+effect of turbine/well infrastructure on the population and, secondly,
+the causal effect of the human population on the bird count.
+
+This report uses both bivariate and continuous DiD settings for
+estimating the effect of energy infrastructure on the local human
+population, motivated by the idea that larger multi-plant energy
+projects are more likely to cause a meaningful change in the population
+level. For both models, the regression (1) was used, involving fixed
+effects. Important to note, that such methodology lacks precision since
+the human population is given on the county level, while data for energy
+plants and bird populations are on the circle level. Furthermore, in the
+absence of controls such as the distance between human habitats and
+circles, this mismatch can lead to significant bias and measurement
+errors, undermining the true estimated effect. Additionally, an inflow
+of population into the state could have arisen due to wider economic
+policies such as tax reforms making it harder to extract the casual
+relationship.
+
+                              **Turbines**   **Shale Wells**
+  -------------------------- -------------- -----------------
+  **Binary Treatment**                      
+  Coefficient                    -0.015          -0.021
+  Std. Error                    (0.006)          (0.015)
+  p-value                        0.009            0.164
+  **Continuous Treatment**                  
+  Coefficient                    -0.000           0.000
+  Std. Error                    (0.000)          (0.000)
+  p-value                        0.002            0.750
+
+  : Estimated Effects of Infrastructure on Bird Population
+
+Results for the bivariate model in Table 5 closely follow the findings
+of the original paper. The installation of the wind turbine is
+associated with a *1.5%* fall in the human population whilst the effect
+from shale wells is negative but statistically insignificant. For
+continuous settings, the effect is essentially zero which might support
+the earlier intensity hypothesis as most circles experienced only single
+installments of infrastructure. However, the negative coefficient found
+in the bivariate model might indicate the reverse causality problem,
+where in reality population trends affect the placement of energy
+infrastructure. For instance, turbines are likely to be built in areas
+where the human population was declining anyway. If this is true, then
+treatment becomes endogenous as it is affected by the outcome.
+Instrumental variables such as the implementation of Renewable Portfolio
+Standards (dummy variable) by counties can fix the issue as these
+policies influence infrastructure and are exogenous to migration
+patterns.
+
+                 **Total Count**   **Total Species**
+  ------------- ----------------- -------------------
+  Coefficient        -0.063              0.002
+  Std. Error         (0.099)            (0.026)
+  p-value             0.525              0.939
+
+  : Estimated Effect of Population on Birds
+
+Table 6 overviews estimates tracking the link between human population
+and bird counts. Results indicate that the relationship between the two
+is insignificant, hence ruling out the possibility of the human
+population acting as a mediator. Although the human population has a
+potential relationship with turbines/wells arrival, it's excluded from
+the set of covariates $X_{ct}$ in regression (1), hence intentionally
+avoiding the issue of endogeneity when estimating the core effect of
+energy infrastructure on birds. However, if the human population
+actually plays the role of the cofounder, affecting both the bird count
+and energy plants, then the inability to control for it presents a
+constraint, undermining precise estimation due to (OVB). While vast
+insignificance reduces concerns, a more in-depth circle-level
+investigation of the human population would be beneficial.
