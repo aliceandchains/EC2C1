@@ -191,6 +191,16 @@ xtreg ihs_spec_longermig shale_did total_effort_counters Min_temp Max_temp Max_s
 
 
 
+
+********************************************************************************
+
+* A small note on average bird counts in untreated circles to better consider economic significance
+
+mean num_tot if turbine_did == 0
+mean num_tot if shale_did == 0
+
+
+
 ********************************************************************************
 
 * Exteneded list of controls - Turbines on bird count
