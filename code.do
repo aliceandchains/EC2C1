@@ -608,13 +608,13 @@ xtreg lnpop shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind 
 
 * Regression of the human population on the turbine arrival (continious)
 
-xtreg ihs_num_tot turbine_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+xtreg lnpop turbine_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
 * Regression of the human population on the shale arrival (continious)
 
-xtreg ihs_num_tot shale_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+xtreg lnpop shale_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
