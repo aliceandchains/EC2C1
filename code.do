@@ -1,3 +1,6 @@
+log using "37728.log", text replace
+
+
 use "birds (1).dta", clear
 
 * Preparing data (encoding string variables and replacing missing values with zeros for snow and speed)
@@ -627,3 +630,7 @@ xtreg ihs_num_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_win
 * Regression of the species count on the population
 
 xtreg ihs_spec_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+log close
