@@ -369,7 +369,7 @@ collapse (mean) avg_treated_turbine avg_control_turbine, by(event_time_turbine)
 
 * Plotting
 
-twoway (line avg_treated_turbine event_time_turbine, lcolor(blue) lwidth(medthick)) (line avg_control_turbine event_time_turbine, lcolor(blue) lpattern(dash) lwidth(medthick)), legend(order(1 "Treated" 2 "Control") ring(0) pos(1) region(lstyle(none))) xline(0, lcolor(black) lpattern(dot)) xtitle("Years Since Treatment", size(medsmall)) ytitle("Avg IHS Bird Count", size(medsmall)) title("Wind Turbines", size(medlarge)) xlabel(-10(2)10, labsize(small)) graphregion(color(white)) plotregion(margin(zero))
+twoway (line avg_treated_turbine event_time_turbine, lcolor(red) lwidth(medthick)) (line avg_control_turbine event_time_turbine, lcolor(red) lpattern(dash) lwidth(medthick)), legend(order(1 "Treated" 2 "Control") ring(0) pos(1) region(lstyle(none))) xline(0, lcolor(black) lpattern(dot)) xtitle("Years Since Treatment", size(medsmall)) ytitle("Avg IHS Bird Count", size(medsmall)) title("Wind Turbines", size(medlarge)) xlabel(-10(2)10, labsize(small)) graphregion(color(white)) plotregion(margin(zero))
 
 restore
 
@@ -424,6 +424,108 @@ xtreg ihs_spec_tot shale_did total_effort_counters Min_temp Max_temp Max_snow Ma
 display "Coef: " _b[shale_did]
 display "SE:   " _se[shale_did]
 display "P-val: " 2*ttail(e(df_r), abs(_b[shale_did]/_se[shale_did]))
+
+
+
+********************************************************************************
+* This part will investigate how the estimated effect changes for circles that had longer post-treatment period
+
+
+
+* Generating Shale windows
+
+gen post_shale_win1 = (year >= first_shale & year <= first_shale + 1 & !missing(first_shale))
+gen post_shale_win2 = (year >= first_shale + 2 & year <= first_shale + 3 & !missing(first_shale))
+gen post_shale_win3 = (year >= first_shale + 4 & year <= first_shale + 5 & !missing(first_shale))
+gen post_shale_win4 = (year >= first_shale + 6 & year <= first_shale + 7 & !missing(first_shale))
+gen post_shale_win5 = (year >= first_shale + 8 & !missing(first_shale))
+
+gen shale_did_win1 = (shale_ever_treated == 1 & post_shale_win1 == 1)
+gen shale_did_win2 = (shale_ever_treated == 1 & post_shale_win2 == 1)
+gen shale_did_win3 = (shale_ever_treated == 1 & post_shale_win3 == 1)
+gen shale_did_win4 = (shale_ever_treated == 1 & post_shale_win4 == 1)
+gen shale_did_win5 = (shale_ever_treated == 1 & post_shale_win5 == 1)
+
+
+
+* Generating Turbine windows
+
+gen post_turbine_win1 = (year >= first_turbine & year <= first_turbine + 1 & !missing(first_turbine))
+gen post_turbine_win2 = (year >= first_turbine + 2 & year <= first_turbine + 3 & !missing(first_turbine))
+gen post_turbine_win3 = (year >= first_turbine + 4 & year <= first_turbine + 5 & !missing(first_turbine))
+gen post_turbine_win4 = (year >= first_turbine + 6 & year <= first_turbine + 7 & !missing(first_turbine))
+gen post_turbine_win5 = (year >= first_turbine + 8 & !missing(first_turbine))
+
+gen turbine_did_win1 = (turbine_ever_treated == 1 & post_turbine_win1 == 1)
+gen turbine_did_win2 = (turbine_ever_treated == 1 & post_turbine_win2 == 1)
+gen turbine_did_win3 = (turbine_ever_treated == 1 & post_turbine_win3 == 1)
+gen turbine_did_win4 = (turbine_ever_treated == 1 & post_turbine_win4 == 1)
+gen turbine_did_win5 = (turbine_ever_treated == 1 & post_turbine_win5 == 1)
+
+
+
+* Effect of Turbines on Bird Population (Katovich covariates)
+
+xtreg ihs_num_tot turbine_did_win1 turbine_did_win2 turbine_did_win3 turbine_did_win4 turbine_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Effect of Turbines on Species Count (Katovich covariates)
+
+xtreg ihs_spec_tot turbine_did_win1 turbine_did_win2 turbine_did_win3 turbine_did_win4 turbine_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Effect of Shales on Bird Population (Katovich covariates)
+
+xtreg ihs_num_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Effect of Shales on Species count (Katovich covariates)
+
+xtreg ihs_spec_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+********************************************************************************
+* This part will check if human population acted as a mediator in affecting the bird count
+
+
+
+* Regression of the human population on the turbine arrival (bivariate)
+
+xtreg lnpop turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Regression of the human population on the shale arrival (bivariate)
+
+xtreg lnpop shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Regression of the human population on the turbine arrival (continious)
+
+xtreg lnpop turbine_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Regression of the human population on the shale arrival (continious)
+
+xtreg lnpop shale_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Regression of the bird count on the population
+
+xtreg ihs_num_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
+
+
+
+* Regression of the species count on the population
+
+xtreg ihs_spec_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
@@ -528,108 +630,6 @@ use `placebo_results', clear
 histogram placebo_effect, bin(20) color(gs13) xline(`=real_effect', lcolor(red) lwidth(medthick) lpattern(solid)) title("Placebo Distribution vs Real Effect") subtitle("Red line = True Shale Effect") xtitle("Estimated Coefficient") ytitle("Frequency") note("Placebo test with 100 random assignments") legend(off)
 display "True effect of shale_did = " real_effect
 display "Real effect of shale_did = " real_effect
-
-
-
-********************************************************************************
-* This part will investigate how the estimated effect changes for circles that had longer post-treatment period
-
-
-
-* Generating Shale windows
-
-gen post_shale_win1 = (year >= first_shale & year <= first_shale + 1 & !missing(first_shale))
-gen post_shale_win2 = (year >= first_shale + 2 & year <= first_shale + 3 & !missing(first_shale))
-gen post_shale_win3 = (year >= first_shale + 4 & year <= first_shale + 5 & !missing(first_shale))
-gen post_shale_win4 = (year >= first_shale + 6 & year <= first_shale + 7 & !missing(first_shale))
-gen post_shale_win5 = (year >= first_shale + 8 & !missing(first_shale))
-
-gen shale_did_win1 = (shale_ever_treated == 1 & post_shale_win1 == 1)
-gen shale_did_win2 = (shale_ever_treated == 1 & post_shale_win2 == 1)
-gen shale_did_win3 = (shale_ever_treated == 1 & post_shale_win3 == 1)
-gen shale_did_win4 = (shale_ever_treated == 1 & post_shale_win4 == 1)
-gen shale_did_win5 = (shale_ever_treated == 1 & post_shale_win5 == 1)
-
-
-
-* Generating Turbine windows
-
-gen post_turbine_win1 = (year >= first_turbine & year <= first_turbine + 1 & !missing(first_turbine))
-gen post_turbine_win2 = (year >= first_turbine + 2 & year <= first_turbine + 3 & !missing(first_turbine))
-gen post_turbine_win3 = (year >= first_turbine + 4 & year <= first_turbine + 5 & !missing(first_turbine))
-gen post_turbine_win4 = (year >= first_turbine + 6 & year <= first_turbine + 7 & !missing(first_turbine))
-gen post_turbine_win5 = (year >= first_turbine + 8 & !missing(first_turbine))
-
-gen turbine_did_win1 = (turbine_ever_treated == 1 & post_turbine_win1 == 1)
-gen turbine_did_win2 = (turbine_ever_treated == 1 & post_turbine_win2 == 1)
-gen turbine_did_win3 = (turbine_ever_treated == 1 & post_turbine_win3 == 1)
-gen turbine_did_win4 = (turbine_ever_treated == 1 & post_turbine_win4 == 1)
-gen turbine_did_win5 = (turbine_ever_treated == 1 & post_turbine_win5 == 1)
-
-
-
-* Effect of Turbines on Bird Population (Katovich covariates)
-
-xtreg ihs_num_tot turbine_did_win1 turbine_did_win2 turbine_did_win3 turbine_did_win4 turbine_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Effect of Turbines on Species Count (Katovich covariates)
-
-xtreg ihs_spec_tot turbine_did_win1 turbine_did_win2 turbine_did_win3 turbine_did_win4 turbine_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Effect of Shales on Bird Population (Katovich covariates)
-
-xtreg ihs_num_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Effect of Shales on Species count (Katovich covariates)
-
-xtreg ihs_spec_tot shale_did_win1 shale_did_win2 shale_did_win3 shale_did_win4 shale_did_win5 total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-********************************************************************************
-* This part will check if human population acted as a mediator in affecting the bird count
-
-
-
-* Regression of the human population on the turbine arrival (bivariate)
-
-xtreg lnpop turbine_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the human population on the shale arrival (bivariate)
-
-xtreg lnpop shale_did total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the human population on the turbine arrival (continious)
-
-xtreg lnpop turbine_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the human population on the shale arrival (continious)
-
-xtreg lnpop shale_did_continuous total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the bird count on the population
-
-xtreg ihs_num_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
-
-
-
-* Regression of the species count on the population
-
-xtreg ihs_spec_tot lnpop total_effort_counters Min_temp Max_temp Max_snow Max_wind ag_land_share past_land_share dev_share_broad dev_share_narrow i.year, fe cluster(circle_id)
 
 
 
